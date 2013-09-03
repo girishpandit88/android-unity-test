@@ -1,92 +1,65 @@
-﻿using System.Collections.Generic;
-using System;
+/* 
+AutoBuilder.cs
+Automatically changes the target platform and creates a build.
+ 
+Installation
+Place in an Editor folder.
+ 
+Usage
+Go to File > AutoBuilder and select a platform. These methods can also be run from the Unity command line using -executeMethod AutoBuilder.MethodName.
+ 
+License
+Copyright (C) 2011 by Thinksquirrel Software, LLC
+ 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+ 
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+ 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+ */
+using UnityEngine;
 using UnityEditor;
-
-class Build {
-	static string[] SCENES = FindEnabledEditorScenes();
-
-	static string APP_NAME = "UnityAndroidTest";
-	static string TARGET_DIR = "target";
-	
-	// Command line arguments, pass in via -arg="value"
-	private const string productNameCommandLineArg = "productName";
-	private const string productSuffixNameCommandLineArg = "productSuffixName";
-	private const string bundleIdentifierCommandLineArg = "bundleIdentifier";
-	private const string bundleVersionCommandLineArg = "bundleVersion";
-	private const string bundleVersionCodeCommandLineArg = "bundleVersionCode";
-	
-	[MenuItem ("Custom/CI/Build iPhone")]
-	static void PerformIPhoneBuild () {
-		string target_dir = APP_NAME;
-		GenericBuild(SCENES, TARGET_DIR + "/" + target_dir, BuildTarget.iPhone,BuildOptions.None);
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+ 
+public static class AutoBuilder {
+ 
+	static string GetProjectName()
+	{
+		string[] s = Application.dataPath.Split('/');
+		return s[s.Length - 2];
+	}
+ 
+	static string[] GetScenePaths()
+	{
+		string[] scenes = new string[EditorBuildSettings.scenes.Length];
+ 
+		for(int i = 0; i < scenes.Length; i++)
+		{
+			scenes[i] = EditorBuildSettings.scenes[i].path;
+		}
+ 
+		return scenes;
+	}
+ 
+	[MenuItem("File/AutoBuilder/Android")]
+	static void PerformAndroidBuild ()
+	{
+		EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
+		BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Android",BuildTarget.Android,BuildOptions.None);
 	}
 	
-	[MenuItem ("Custom/CI/Build Android")]
-	static void PerformAndroidBuild () {
-		string target_dir = APP_NAME + ".apk";
-		
-		if (CommandLineArgExists(bundleVersionCodeCommandLineArg)) {
-			PlayerSettings.Android.bundleVersionCode = Convert.ToInt32(ExtractCommandLineArg(bundleVersionCodeCommandLineArg));
-		}
-		
-		GenericBuild(SCENES, TARGET_DIR + "/" + target_dir, BuildTarget.Android,BuildOptions.None);
-	}
-	
-	private static string[] FindEnabledEditorScenes() {
-		List<string> EditorScenes = new List<string>();
-		foreach(EditorBuildSettingsScene scene in EditorBuildSettings.scenes) {
-			if (!scene.enabled) continue;
-			EditorScenes.Add(scene.path);
-		}
-		return EditorScenes.ToArray();
-	}
-
-	static void GenericBuild(string[] scenes, string target_dir, BuildTarget build_target, BuildOptions build_options) {
-		if (CommandLineArgExists(productNameCommandLineArg)) {
-			PlayerSettings.productName = ExtractCommandLineArg(productNameCommandLineArg);
-		}
-	
-		if (CommandLineArgExists(productSuffixNameCommandLineArg)) {
-			PlayerSettings.productName = PlayerSettings.productName + ExtractCommandLineArg(productSuffixNameCommandLineArg);
-		}
-	
-		if (CommandLineArgExists(bundleIdentifierCommandLineArg)) {
-			PlayerSettings.bundleIdentifier = ExtractCommandLineArg(bundleIdentifierCommandLineArg);
-		}
-		
-		if (CommandLineArgExists(bundleVersionCommandLineArg)) {
-			PlayerSettings.bundleVersion = ExtractCommandLineArg(bundleVersionCommandLineArg);
-		}
-		
-		EditorUserBuildSettings.SwitchActiveBuildTarget(build_target);
-		string res = BuildPipeline.BuildPlayer(scenes,target_dir,build_target,build_options);
-		if (res.Length > 0) {
-			throw new Exception("BuildPlayer failure: " + res);
-		}
-	}
-	
-    protected static bool CommandLineArgExists(string argName)
-    {
-        foreach (string cmdLineArg in System.Environment.GetCommandLineArgs())
-        {
-            string commandLineString = string.Format("-{0}", argName);
-            if (cmdLineArg.Equals(commandLineString) || cmdLineArg.StartsWith(commandLineString))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    protected static string ExtractCommandLineArg(string argName)
-    {
-        foreach (string cmdLineArg in System.Environment.GetCommandLineArgs())
-        {
-            if (cmdLineArg.StartsWith(string.Format("-{0}", argName)))
-            {
-                return cmdLineArg.Substring(string.Format("-{0}=", argName).Length);
-            }
-        }
-        return "";
-    }
 }
