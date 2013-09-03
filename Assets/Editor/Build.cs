@@ -36,6 +36,9 @@ using System.Collections.Generic;
 using System.IO;
  
 public static class AutoBuilder {
+	
+	static string APP_NAME = "AndroidUnityTest";
+	static string TARGET = "/tmp/workspace/android-test-unity";
  
 	static string GetProjectName()
 	{
@@ -58,8 +61,9 @@ public static class AutoBuilder {
 	[MenuItem("File/AutoBuilder/Android")]
 	static void PerformAndroidBuild ()
 	{
+		string target_dir = TARGET+ "/"+ APP_NAME + ".apk";
 		EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
-		BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Android",BuildTarget.Android,BuildOptions.None);
+		BuildPipeline.BuildPlayer(GetScenePaths(),target_dir ,BuildTarget.Android,BuildOptions.None);
 	}
 	
 }
